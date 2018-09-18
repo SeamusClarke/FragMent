@@ -4,7 +4,7 @@ FragMent is a python/C module which collates a number techniques used to study f
 
 ## Dependencies 
 
-BTS requires 4 common libraries to be installed:
+FragMent requires 4 common libraries to be installed:
 
 * Numpy,
 * Scipy,
