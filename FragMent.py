@@ -32,7 +32,7 @@ import emcee
 ### Inputs:
 ### dist         (array)                   The distribution of separations which is being tested
 ### method       (string)                  The method used to produce the distribution of separations
-### length       (float)                   The length of the filament 
+### bounds        (array)                   The boundary box in which one may randomly place cores
 ### num          (int)                     The number of random realisations to produce the null distribution
 ### lower_lim    (float)                   The smallest separation between cores allowed in the random distributions, should be set to data resolution.
 ###
@@ -41,7 +41,14 @@ import emcee
 ### crit_val     (array)                   An array showing the critical values of the test statistic to achieve a significance levels 25%, 10%, 5%, 2.5%, 1%
 ### p_val        (float)                   The p-value corresponding to the test statistic 
 
-def AD_test(dist,method,length,num,lower_lim):
+def AD_test(dist,method,bounds,num,lower_lim):
+
+	### Unpack the bounds array
+	xmin = bounds[0]
+	xmax = bounds[1]
+
+	ymin = bounds[2]
+	ymax = bounds[3]
 
 	### Finding the number of cores to randomly place from the input distribution
 	if(method=="NNS"):
@@ -59,9 +66,9 @@ def AD_test(dist,method,length,num,lower_lim):
 	### Loop over each random realisation
 	while(tot_num<num):
 
-		### Place the cores randomly along the length of the filament
-		x = length*numpy.random.random(num_cores)
-		y = numpy.zeros_like(x)
+		### Place the cores randomly in the box
+		x = (xmax - xmin)*numpy.random.random(num_cores) + xmin
+		y = (ymax - ymin)*numpy.random.random(num_cores) + ymin
 		pos = numpy.column_stack((x,y))
 
 		### Use the same method to analyse the random cores as the data set
@@ -96,7 +103,7 @@ def AD_test(dist,method,length,num,lower_lim):
 ### Inputs:
 ### dist         (array)                   The distribution of separations which is being tested
 ### method       (string)                  The method used to produce the distribution of separations
-### length       (float)                   The length of the filament 
+### bounds        (array)                   The boundary box in which one may randomly place cores
 ### num          (int)                     The number of random realisations to produce the null distribution
 ### lower_lim    (float)                   The smallest separation between cores allowed in the random distributions, should be set to data resolution.
 ###
@@ -104,7 +111,14 @@ def AD_test(dist,method,length,num,lower_lim):
 ### stat_dist    (float)                   The KS test statistic
 ### p_val        (float)                   The p-value corresponding to the test statistic
 
-def KS_test(dist,method,length,num,lower_lim):
+def KS_test(dist,method,bounds,num,lower_lim):
+
+	### Unpack the bounds array
+	xmin = bounds[0]
+	xmax = bounds[1]
+
+	ymin = bounds[2]
+	ymax = bounds[3]
 
 	### Finding the number of cores to randomly place from the input distribution
 	if(method=="NNS"):
@@ -122,9 +136,9 @@ def KS_test(dist,method,length,num,lower_lim):
 	### Loop over each random realisation
 	while(tot_num<num):
 
-		### Place the cores randomly along the length of the filament
-		x = length*numpy.random.random(num_cores)
-		y = numpy.zeros_like(x)
+		### Place the cores randomly in the box
+		x = (xmax - xmin)*numpy.random.random(num_cores) + xmin
+		y = (ymax - ymin)*numpy.random.random(num_cores) + ymin
 		pos = numpy.column_stack((x,y))
 
 		### Use the same method to analyse the random cores as the data set
@@ -159,7 +173,7 @@ def KS_test(dist,method,length,num,lower_lim):
 ### Inputs:
 ### dist         (array)                   The distribution of separations which is being tested
 ### method       (string)                  The method used to produce the distribution of separations
-### length       (float)                   The length of the filament 
+### bound        (array)                   The boundary box in which one may randomly place cores
 ### num          (int)                     The number of random realisations to produce the null distribution
 ### lower_lim    (float)                   The smallest separation between cores allowed in the random distributions, should be set to data resolution.
 ###
@@ -167,7 +181,14 @@ def KS_test(dist,method,length,num,lower_lim):
 ### p_med        (float)                   The p-value from the null hypothesis test when using the median and interquartile range
 ### p_mea        (float)                   The p-value from the null hypothesis test when using the mean and standard deviation
 
-def Stat_Sig(dist, method, length, num, lower_lim):
+def Stat_Sig(dist, method, bounds, num, lower_lim):
+
+	### Unpack the bounds array
+	xmin = bounds[0]
+	xmax = bounds[1]
+
+	ymin = bounds[2]
+	ymax = bounds[3]
 
 	### Create empty lists for the medians, means, standard deviation and interquartile ranges of the randomly placed core distributions
 	med_sep = []
@@ -190,9 +211,9 @@ def Stat_Sig(dist, method, length, num, lower_lim):
 	### Loop over each random realisation
 	while(tot_num<num):
 
-		### Place the cores randomly along the length of the filament
-		x = length*numpy.random.random(num_cores)
-		y = numpy.zeros_like(x)
+		### Place the cores randomly in the box
+		x = (xmax - xmin)*numpy.random.random(num_cores) + xmin
+		y = (ymax - ymin)*numpy.random.random(num_cores) + ymin
 		pos = numpy.column_stack((x,y))
 
 		### Use the same method to analyse the random cores as the data set

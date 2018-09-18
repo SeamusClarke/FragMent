@@ -9,7 +9,12 @@ pos = numpy.loadtxt("core_positions.dat")
 ### Load the spine of the filaments
 spine = numpy.loadtxt("spine.dat")
 
-
+### Define a boundary for placing random cores
+xmin = 1.994
+xmax = 1.996
+ymin = 0.0
+ymax = 4.0
+boundary = numpy.array([xmin,xmax,ymin,ymax])
 
 
 
@@ -17,12 +22,11 @@ spine = numpy.loadtxt("spine.dat")
 nn_seps = FragMent.NNS(pos)
 
 ### Statistical significance of the results
-length = 4.0
 nruns = 1000
 sep_limit = 0.02
-p_median, p_mean = FragMent.Stat_Sig(nn_seps, "NNS", length, nruns, sep_limit)
-ks_stat, p_ks = FragMent.KS_test(nn_seps, "NNS", length, nruns, sep_limit)
-ad_stat, crit_vals, p_ad = FragMent.AD_test(nn_seps, "NNS", length, nruns, sep_limit)
+p_median, p_mean = FragMent.Stat_Sig(nn_seps, "NNS", boundary, nruns, sep_limit)
+ks_stat, p_ks = FragMent.KS_test(nn_seps, "NNS", boundary, nruns, sep_limit)
+ad_stat, crit_vals, p_ad = FragMent.AD_test(nn_seps, "NNS", boundary, nruns, sep_limit)
 
 ### Report results
 print " "
@@ -42,9 +46,9 @@ print "The p-values from the K-S and A-D test are                : ", p_ks, p_ad
 mst_seps, mst = FragMent.MST(pos)
 
 ### Statistical significance of the results
-p_median, p_mean = FragMent.Stat_Sig(mst_seps, "MST", length, nruns, sep_limit)
-ks_stat, p_ks = FragMent.KS_test(mst_seps, "MST", length, nruns, sep_limit)
-ad_stat, crit_vals, p_ad = FragMent.AD_test(mst_seps, "MST", length, nruns, sep_limit)
+p_median, p_mean = FragMent.Stat_Sig(mst_seps, "MST", boundary, nruns, sep_limit)
+ks_stat, p_ks = FragMent.KS_test(mst_seps, "MST", boundary, nruns, sep_limit)
+ad_stat, crit_vals, p_ad = FragMent.AD_test(mst_seps, "MST", boundary, nruns, sep_limit)
 
 ### Report results
 print " "
@@ -93,13 +97,6 @@ print "The results are plotted in the file NNN_results.png"
 
 
 ### Determine the two-point correlation function
-
-### Define a boundary for placing random cores
-xmin = 1.99
-xmax = 2.00
-ymin = 0.0
-ymax = 4.0
-boundary = numpy.array([xmin,xmax,ymin,ymax])
 
 ### Calculate the exact two point correlation function
 nruns = 1000
