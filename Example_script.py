@@ -101,9 +101,6 @@ ymin = 0.0
 ymax = 4.0
 boundary = numpy.array([xmin,xmax,ymin,ymax])
 
-### Timing switch turned on
-timing = 1
-
 ### Calculate the exact two point correlation function
 nruns = 1000
 sep, w = FragMent.TwoPoint(pos,nruns,boundary)
@@ -238,7 +235,7 @@ def prior_two(params, bound):
 walkers_one, post_one, walkers_two, post_two = FragMent.Posterior_of_models(mst_seps,bound,mcmc_param,prior_one, prior_two)
 
 ### Calculate the evidence of each model
-n=10
+n=25
 evi_one, evi_two = FragMent.Evidence_explicit(mst_seps,bound,prior_one, prior_two,n)
 
 ### Report results
