@@ -28,6 +28,10 @@ import emcee
 
 
 
+### Statistical significance tools ###
+
+
+
 ### A function to perform an Anderson-Darling test on the results from either the nearest neighbour method or the minimum spanning tree
 ### Inputs:
 ### dist         (array)                   The distribution of separations which is being tested
@@ -345,6 +349,10 @@ def Stat_Sig(dist, method, bounds, num, lower_lim):
 
 
 
+### Fragmentation analysis techniques ###
+
+
+
 ### A function to produce the nearest neighbour separation distribution for a given set of core positions 
 ### Inputs:
 ### pos        (2d-array)                The 2d-array of size (n,2) for n cores 
@@ -486,12 +494,13 @@ def MST(pos):
 ### pos        (2d-array)               The 2d-array of size (n,2) for n cores 
 ### nruns      (int)                    The number of random realisations to produce the DR and RR arrays
 ### bounds     (array)                  The boundary box in which one may randomly place cores
+### lower_lim  (float)                  The smallest value of the bandwidth allowed
 ###
 ### Outputs:
 ### sep       (array)                   The array of separations at which the two-point correlation function has been evaluated
 ### w         (array)                   The two-point correlation function 
 
-def TwoPoint(pos,nruns,bounds):
+def TwoPoint(pos,nruns,bounds,lower_lim):
 
 	### Determine the number of cores
 	n_pos = len(pos[:,0])
@@ -524,10 +533,11 @@ def TwoPoint(pos,nruns,bounds):
 	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
 	twopoint = lib.TwoPoint
 	twopoint.restype = None
-	twopoint.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+	lower_lim = numpy.double(lower_lim)
+	twopoint.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_double, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
 
 	### Call the C two-point correlation function which returns KDEs for the DD, DR and RR arrays
-	twopoint(pos_x,pos_y,n_pos,nruns,bounds,x_size,DD,DR,RR)
+	twopoint(pos_x,pos_y,n_pos,nruns,bounds,x_size,lower_lim,DD,DR,RR)
 
 	### Construct the two-point correlation function from the DD, DR and RR arrays
 	w = (DD - 2*DR + RR)/RR	
@@ -549,13 +559,14 @@ def TwoPoint(pos,nruns,bounds):
 ### pos        (2d-array)               The 2d-array of size (n,2) for n cores 
 ### nruns      (int)                    The number of random realisations to produce the DR and RR arrays
 ### bounds     (array)                  The boundary box in which one may randomly place cores
+### lower_lim  (float)                  The smallest value of the bandwidth allowed
 ### op_crit    (op_crit)                The opening criterion constant to control the error of the approximate KDE
 ###
 ### Outputs:
 ### sep       (array)                   The array of separations at which the two-point correlation function has been evaluated
 ### w         (array)                   The two-point correlation function 
 
-def ApproxTwoPoint(pos,nruns,bounds,error):
+def ApproxTwoPoint(pos,nruns,bounds,lower_lim,error):
 
 	### Determine the number of cores
 	n_pos = len(pos[:,0])
@@ -588,10 +599,11 @@ def ApproxTwoPoint(pos,nruns,bounds,error):
 	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
 	twopoint = lib.ApproxTwoPoint
 	twopoint.restype = None
-	twopoint.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_double, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+	lower_lim = numpy.double(lower_lim)
+	twopoint.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_int, ctypes.c_double, ctypes.c_double, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
 
 	### Call the C two-point correlation function which returns KDEs for the DD, DR and RR arrays
-	twopoint(pos_x,pos_y,n_pos,nruns,bounds,x_size,error,DD,DR,RR)
+	twopoint(pos_x,pos_y,n_pos,nruns,bounds,x_size,lower_lim,error,DD,DR,RR)
 	
 	### Construct the two-point correlation function from the DD, DR and RR arrays
 	w = (DD - 2*DR + RR)/RR	
@@ -636,6 +648,10 @@ def FT_Spine(spine):
 
 
 
+
+
+
+### Model selection techniques ###
 
 
 
@@ -937,6 +953,184 @@ def Evidence_explicit(spacings,bound,prior_one, prior_two,n):
 
 
 
+
+
+
+### Supplementary functions ###
+
+
+### A function to straighten a filament
+### Inputs:
+### spine        (2d-array)             An ordered list of x,y co-ordinates of the spine points, shape n by 2 for n spine points
+### Map          (2d-array)             The column density or integrated intensity map of the filament which you wish to straighten
+### n_pix        (int)                  The number of points on either side of the radial profile
+### order        (int)                  The order of polynomial used to fit the spine points
+### max_dist     (int)                  The maximum allowed distance from the plane that a point may be to contribute to the radial profile        
+###
+### Str_fil      (2d-array)             The straightened filament map
+
+def Straighten_filament(spine, Map, n_pix,order,max_dist): 
+
+	### Unpack the spine array and determine the number of spine points
+	x = spine[:,0]
+	y = spine[:,1]
+	n_spine = len(x)
+
+	### Fit a polynomial to the spine points, then find the gradient by differentiating the function 
+	p = numpy.polyfit(x,y,order)
+	p2 = p[:-1]
+	q = numpy.arange(1,order+1,1)
+	grad = numpy.poly1d(p2*q[::-1])
+	
+	### Create an empty array for the straightened filament
+	Str_fil = numpy.zeros((2*n_pix + 1,n_spine-2))
+
+	### Loop over the spine points
+	for ii in range(1,n_spine-1):
+
+		### Store co-ordinates of the spine point
+		x0 = int(x[ii])
+		y0 = int(y[ii])
+
+		### Create storage arrays to build the left side and right side of radial profile for this spine point
+		left_num = numpy.zeros(n_pix) + 1e-99
+		right_num = numpy.zeros(n_pix) + 1e-99
+
+		left_profile = numpy.zeros(n_pix)
+		right_profile = numpy.zeros(n_pix)
+	
+		### Find the gradient at this spine point and using it as a normal define a plane perpendicular to the spine
+		a = 1
+		b = grad(x0)
+		norm = numpy.array([a,b],dtype=numpy.double)
+		plane_const = numpy.sum(norm*spine[ii,:]) 
+
+		### Define the box around the spine point to find positions to map onto the radial profile
+		ymin = max(y0 - n_pix,0)
+		xmin = max(x0 - n_pix,0)
+		ymax = min(y0 + n_pix,numpy.shape(Map)[1])
+		xmax = min(x0 + n_pix,numpy.shape(Map)[0])
+
+		### Tangent has a negative slope
+		if(-float(b)/a > 0):
+
+			### Look at the right side of the profile
+			for xx in range(xmin,x0+max_dist):
+				for yy in range(ymin,y0):
+
+					### Calculate distance between the point under consideration and the plane
+					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
+
+					### If the distance to the plane is low then the point is counted towards the radial profile
+					if(dist_to_norm < max_dist):
+
+						### Locate the position on the plane which is closest to this pixel
+						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
+						x_plane = xx - alpha*a
+						y_plane = yy - alpha*b
+
+						### Calculate the distance along the plane from the spine point
+						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
+						
+						### Place the point on the radial profile at the correct distance
+						d = numpy.int(dist) - 1
+						if(d < n_pix and d>=0):			
+							right_profile[d] = right_profile[d] + Map[xx,yy]
+							right_num[d] = right_num[d] + 1
+
+
+			### Look at the left side of the profile
+			for xx in range(x0-max_dist,xmax):
+				for yy in range(y0,ymax):
+
+					### Calculate distance between the point under consideration and the plane
+					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
+
+					### If the distance to the plane is low then the point is counted towards the radial profile
+					if(dist_to_norm < max_dist):
+
+						### Locate the position on the plane which is closest to this pixel
+						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
+						x_plane = xx - alpha*a
+						y_plane = yy - alpha*b
+
+						### Calculate the distance along the plane from the spine point
+						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
+
+						### Place the point on the radial profile at the correct distance
+						d = numpy.int(dist) - 1
+						if(d < n_pix and d>=0):
+							left_profile[d] = left_profile[d] + Map[xx,yy]
+							left_num[d] = left_num[d] + 1					
+
+
+
+		### Tangent has a positive slope
+		if(-float(b)/a < 0):
+
+			### Look at the right side of the profile
+			for xx in range(x0-max_dist,xmax):
+				for yy in range(ymin,y0+1):
+
+					### Calculate distance between the point under consideration and the plane
+					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
+
+					### If the distance to the plane is low then the point is counted towards the radial profile
+					if(dist_to_norm < max_dist):
+
+						### Locate the position on the plane which is closest to this pixel
+						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
+						x_plane = xx - alpha*a
+						y_plane = yy - alpha*b
+
+						### Calculate the distance along plane from the spine point
+						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
+
+						### Place the point on the radial profile at the correct distance
+						d = numpy.int(dist) - 1
+						if(d < n_pix and d>=0):
+							right_profile[d] = right_profile[d] + Map[xx,yy]
+							right_num[d] = right_num[d] + 1
+
+			### Look at the left side of the profile
+			for xx in range(xmin,x0+max_dist):
+				for yy in range(y0,ymax):
+
+					### Calculate distance between the point under consideration and the plane
+					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
+
+					### If the distance to the plane is low then the point is counted towards the radial profile
+					if(dist_to_norm < max_dist):
+
+						### Locate the position on the plane which is closest to this pixel
+						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
+						x_plane = xx - alpha*a
+						y_plane = yy - alpha*b
+
+						### Calculate the distance along plane from the spine point
+						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
+
+						### Place the point on the radial profile at the correct distance
+						d = numpy.int(dist) - 1
+						if(d < n_pix and d>=0):
+							left_profile[d] = left_profile[d] + Map[xx,yy]
+							left_num[d] = left_num[d] + 1
+
+
+		### Take the mean of the contributions at each distance 
+
+		left_profile = left_profile / left_num
+		right_profile = right_profile / right_num
+
+		### Place the profile in the 2D array and flip the profile around
+		Str_fil[:n_pix,ii-1] = left_profile[::-1]
+		Str_fil[n_pix,ii-1] = Map[x0,y0]
+		Str_fil[n_pix+1:,ii-1] = right_profile	
+
+		Str_fil[:,ii-1] = Str_fil[::-1,ii-1]
+
+
+	return Str_fil
 
 
 

@@ -323,7 +323,7 @@ void approxKDE(double *x, int x_size, float *array, int a_size, double bandwidth
 // These are the external functions which python calls
 
 // Construct the Two-point correlation function by using an exact KDE
-void TwoPoint(const double *pos_x, const double *pos_y, int size, int nruns, const double *bounds, int x_size, double *DD, double *DR, double *RR){
+void TwoPoint(const double *pos_x, const double *pos_y, int size, int nruns, const double *bounds, int x_size, double lower_lim, double *DD, double *DR, double *RR){
 
 	//struct timeval t1, t2;
 	//double elapsedTime;
@@ -408,6 +408,7 @@ void TwoPoint(const double *pos_x, const double *pos_y, int size, int nruns, con
 	// Determine the bandwidth of the KDE using the DR array
 	double bd;
 	bd = Bandwidth_calc(tot_DR, DR_size);
+	if(bd<lower_lim) bd = lower_lim;
 	
 	// Construct exact KDEs for DD, DR and RR
 	KDE(x,x_size,tot_DD,DD_size,bd,DD);
@@ -436,7 +437,7 @@ void TwoPoint(const double *pos_x, const double *pos_y, int size, int nruns, con
 }
 
 // Construct a Two point correlation function using approximate KDEs
-void ApproxTwoPoint(const double *pos_x, const double *pos_y, int size, int nruns, const double *bounds, int x_size, double error, double *DD, double *DR, double *RR){
+void ApproxTwoPoint(const double *pos_x, const double *pos_y, int size, int nruns, const double *bounds, int x_size, double lower_lim, double error, double *DD, double *DR, double *RR){
 
 
 	//struct timeval t1, t2;
@@ -522,6 +523,7 @@ void ApproxTwoPoint(const double *pos_x, const double *pos_y, int size, int nrun
 	// Determine the bandwidth of the KDE using the DR array
 	double bd;
 	bd = Bandwidth_calc(tot_DR, DR_size);
+	if(bd<lower_lim) bd = lower_lim;
 
 	// Construct an exact KDE for DD and approximate KDEs for DR and RR arrays
 	KDE(x,x_size,tot_DD,DD_size,bd,DD);

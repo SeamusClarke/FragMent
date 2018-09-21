@@ -99,12 +99,13 @@ print "The results are plotted in the file NNN_results.png"
 ### Determine the two-point correlation function
 
 ### Calculate the exact two point correlation function
-nruns = 1000
-sep, w = FragMent.TwoPoint(pos,nruns,boundary)
+nruns = 10000
+lower_lim = 0.06
+sep, w = FragMent.TwoPoint(pos,nruns,boundary,lower_lim)
 
 ### Calculate the approximate two point correlation function
 op_crit = 1e-2
-sep, wa = FragMent.ApproxTwoPoint(pos,nruns,boundary,op_crit)
+sep, wa = FragMent.ApproxTwoPoint(pos,nruns,boundary,lower_lim,op_crit)
 
 ### Plot results
 plt.figure(2)
