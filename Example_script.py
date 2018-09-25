@@ -2,6 +2,8 @@ import FragMent
 import numpy
 import matplotlib.pyplot as plt
 from scipy.stats import iqr
+from astropy.io import fits
+from matplotlib import gridspec
 
 ### Load the positions of the cores
 pos = numpy.loadtxt("core_positions.dat")
@@ -99,7 +101,7 @@ print "The results are plotted in the file NNN_results.png"
 ### Determine the two-point correlation function
 
 ### Calculate the exact two point correlation function
-nruns = 10000
+nruns = 1000
 lower_lim = 0.06
 sep, w = FragMent.TwoPoint(pos,nruns,boundary,lower_lim)
 
@@ -233,7 +235,7 @@ def prior_two(params, bound):
 walkers_one, post_one, walkers_two, post_two = FragMent.Posterior_of_models(mst_seps,bound,mcmc_param,prior_one, prior_two)
 
 ### Calculate the evidence of each model
-n=25
+n=15
 evi_one, evi_two = FragMent.Evidence_explicit(mst_seps,bound,prior_one, prior_two,n)
 
 ### Report results
@@ -250,4 +252,80 @@ if(evi_two > evi_one):
 	print "Two-tier fragmentation is preferred"
 	print "The Bayes factor for in favour of model two is   : ", evi_two/evi_one
 	print "The most likely parameters from the posterior are: ", walkers_two[numpy.argmax(post_two)]
+
+
+
+
+
+### An example of straightening a filament and the accompanying cores
+
+### Load the example filament map and spine
+Map = fits.getdata("./Curved_filament.fits")
+spine = numpy.loadtxt("./Curved_filament_spine.dat")
+
+### Place some `cores' close to the spine
+pos = numpy.zeros((4,2))
+
+pos[0,0] = spine[5,0]
+pos[0,1] = spine[5,1] + 1
+
+pos[1,0] = spine[17,0] + 3
+pos[1,1] = spine[17,1] + 1
+
+pos[2,0] = spine[60,0]
+pos[2,1] = spine[60,1]
+
+pos[3,0] = spine[100,0] + 2
+pos[3,1] = spine[100,1] - 3
+
+### Map the cores to the spine
+cpos = FragMent.Map_cores(spine,pos)
+
+### Straighten the filament using the interpolation and weighted average methods
+s,l,r = FragMent.Straighten_filament_interp(spine,Map.T,90,30,10)
+s2,l,r = FragMent.Straighten_filament_weight(spine,Map.T,90,30,10,0.5)
+
+### Get limits for the plots
+miny = numpy.amin(l)
+maxy = numpy.amax(l)
+
+minx = numpy.amin(r)
+maxx = numpy.amax(r)
+
+maxc = numpy.amax(Map)
+minc = numpy.amin(Map)
+
+### Plot the results
+fig = plt.figure(4,figsize=(10,8))
+gs = gridspec.GridSpec(2,4)
+ax1 = fig.add_subplot(gs[:,:2])
+
+i = ax1.imshow(Map,origin=0,interpolation="gaussian", vmax = maxc, vmin = minc , extent=[0,200,0,200])
+ax1.plot(spine[:,0],spine[:,1],"k",linewidth="2")
+ax1.plot(pos[:,0],pos[:,1],"ro")
+plt.setp(ax1,yticks=[40,80,120,160],yticklabels=[40,80,120,160],xticks=[40,80,120,160],xticklabels=[40,80,120,160])
+plt.ylabel("y")
+plt.xlabel("x")
+
+ax2 = fig.add_subplot(gs[:,2])
+ax2.imshow(s.T,origin="lower",interpolation="gaussian", vmax = maxc, vmin = minc , extent=[minx,maxx,miny,maxy])
+ax2.plot(cpos[:,0],cpos[:,1],"ro")
+plt.setp(ax2,yticks=[],yticklabels=[],xticks=[-15,0,15],xticklabels=[-15,0,15])
+plt.xlabel("Radius")
+
+ax3 = fig.add_subplot(gs[:,3])
+ax3.imshow(s2.T,origin="lower",interpolation="gaussian", vmax = maxc, vmin = minc , extent=[minx,maxx,miny,maxy])
+ax3.plot(cpos[:,0],cpos[:,1],"ro")
+plt.setp(ax3,yticks=[20,40,60,80,100,120],yticklabels=[20,40,60,80,100,120],xticks=[-15,0,15],xticklabels=[-15,0,15])
+plt.ylabel("Longitudinal axis")
+plt.xlabel("Radius")
+ax3.yaxis.tick_right()
+ax3.yaxis.set_label_position("right")
+
+cbaxes = fig.add_axes([0.1, 0.1, 0.8,0.05])
+cb = plt.colorbar(i,label="Intensity", cax = cbaxes,orientation="horizontal") 
+
+fig.subplots_adjust(left=0.11, bottom=0.18, right=0.89, top=0.93, wspace=0.25, hspace=0.1)
+
+plt.savefig("Straight_filament.png")
 
