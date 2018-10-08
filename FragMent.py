@@ -959,17 +959,20 @@ def Evidence_explicit(spacings,bound,prior_one, prior_two,n):
 ### Supplementary functions ###
 
 
-### A function to straighten a filament
+### A function to straighten a filament using the weighted average method 
 ### Inputs:
 ### spine        (2d-array)             An ordered list of x,y co-ordinates of the spine points, shape n by 2 for n spine points
 ### Map          (2d-array)             The column density or integrated intensity map of the filament which you wish to straighten
-### n_pix        (int)                  The number of points on either side of the radial profile
+### n_pix        (int)                  The number of evaluation points on either side of the radial profile
+### max_dist     (float)                The distance to which the radial profile extends
 ### order        (int)                  The order of polynomial used to fit the spine points
-### max_dist     (int)                  The maximum allowed distance from the plane that a point may be to contribute to the radial profile        
+### h_length     (float)                The smoothing length used for weighting       
 ###
 ### Str_fil      (2d-array)             The straightened filament map
+### length       (array)                The length of the straightened filament
+### radial       (array)                The radius at each evaluation point
 
-def Straighten_filament(spine, Map, n_pix,order,max_dist): 
+def Straighten_filament_weight(spine, Map, n_pix, max_dist, order, h_length): 
 
 	### Unpack the spine array and determine the number of spine points
 	x = spine[:,0]
@@ -978,26 +981,137 @@ def Straighten_filament(spine, Map, n_pix,order,max_dist):
 
 	### Fit a polynomial to the spine points, then find the gradient by differentiating the function 
 	p = numpy.polyfit(x,y,order)
+	f = numpy.poly1d(p)
 	p2 = p[:-1]
 	q = numpy.arange(1,order+1,1)
 	grad = numpy.poly1d(p2*q[::-1])
-	
+
 	### Create an empty array for the straightened filament
-	Str_fil = numpy.zeros((2*n_pix + 1,n_spine-2))
+	Str_fil = numpy.zeros((2*n_pix + 1,n_spine))
+
+	### Pixels which are within 3 times the smoothing length are considered
+	eval_dist = int(numpy.ceil(3*h_length)) + 1
+
+	### Create empty length array
+	length = numpy.zeros(n_spine)
 
 	### Loop over the spine points
-	for ii in range(1,n_spine-1):
+	for ii in range(0,n_spine):
 
 		### Store co-ordinates of the spine point
 		x0 = int(x[ii])
 		y0 = int(y[ii])
 
-		### Create storage arrays to build the left side and right side of radial profile for this spine point
-		left_num = numpy.zeros(n_pix) + 1e-99
-		right_num = numpy.zeros(n_pix) + 1e-99
+		### If the spine point is not the first then we construct the length along the filament
+		if(ii>0):
+			length[ii] = length[ii-1] + numpy.sqrt( (x[ii]-x[ii-1])**2 + (y[ii]-y[ii-1])**2 )
 
-		left_profile = numpy.zeros(n_pix)
-		right_profile = numpy.zeros(n_pix)
+		### Find the gradient at this spine point and using it as a normal define the radial axis perpendicular to the spine
+		a = 1
+		b = grad(x0)
+		norm = numpy.array([a,b],dtype=numpy.double)
+		plane_const = numpy.sum(norm*spine[ii,:]) 
+
+		### Construct the evaluation points along the normal line
+		m = -a/b
+		xmax = x0 + numpy.sqrt(max_dist**2/(m*m + 1))
+		xmin = x0 - numpy.sqrt(max_dist**2/(m*m + 1))
+		x_norm = numpy.linspace(xmin,xmax,2*n_pix + 1)
+		y_norm = m*x_norm - m*x0 + y0
+
+		### Set up profile
+		profile = numpy.zeros(2*n_pix + 1)
+		profile_weight = numpy.zeros(2*n_pix + 1) + 1e-99
+
+		### Loop over the evaluation points
+		for jj in range(0,2*n_pix + 1):
+			
+			### Find the co-ordinates of the pixel in which the evaluation point lies
+			xn = int(x_norm[jj])
+			yn = int(y_norm[jj])
+
+			### Loop over the pixels near the evaluation point
+			for xx in range(xn-eval_dist,xn+eval_dist+1):
+				for yy in range(yn-eval_dist,yn+eval_dist+1):
+
+					### Calculate distance between the evaluation point and the pixels nearby, and therefore the pixel's weight
+					dist = numpy.sqrt( (xx-x_norm[jj])**2 + (yy-y_norm[jj])**2 )
+					weight = (1.0/numpy.sqrt(2*numpy.pi*h_length**2)) * numpy.exp(-(dist**2) / (2*h_length**2))
+
+					### Add to the profile and the weight
+					profile[jj] = profile[jj] + Map[xx,yy]*weight
+					profile_weight[jj] = profile_weight[jj] + weight
+
+
+		### Take the weighted mean of the contributions along the profile 
+		profile = profile / profile_weight
+
+		### Flip the profile if the gradient of the normal is negative
+		if(-a/b < 0):
+			profile = profile[::-1]
+			
+		Str_fil[:,ii] = profile
+
+
+	### Construct radial position array
+	radial = numpy.linspace(-max_dist,max_dist,2*n_pix+1)
+
+	return Str_fil, length, radial
+
+
+
+
+
+
+
+
+
+
+### A function to straighten a filament using interpolation
+### Inputs:
+### spine        (2d-array)             An ordered list of x,y co-ordinates of the spine points, shape n by 2 for n spine points
+### Map          (2d-array)             The column density or integrated intensity map of the filament which you wish to straighten
+### n_pix        (int)                  The number of evaluation points on either side of the radial profile
+### max_dist     (float)                The distance to which the radial profile extends
+### order        (int)                  The order of polynomial used to fit the spine points      
+###
+### Str_fil      (2d-array)             The straightened filament map
+### length       (array)                The length of the straightened filament
+### radial       (array)                The radius at each evaluation point
+
+def Straighten_filament_interp(spine, Map, n_pix, max_dist, order): 
+
+	### Unpack the spine array and determine the number of spine points
+	x = spine[:,0]
+	y = spine[:,1]
+	n_spine = len(x)
+
+	### Fit a polynomial to the spine points, then find the gradient by differentiating the function 
+	p = numpy.polyfit(x,y,order)
+	f = numpy.poly1d(p)
+	p2 = p[:-1]
+	q = numpy.arange(1,order+1,1)
+	grad = numpy.poly1d(p2*q[::-1])
+
+	### Create an empty array for the straightened filament
+	Str_fil = numpy.zeros((2*n_pix + 1,n_spine))
+
+	### Create empty length array
+	length = numpy.zeros(n_spine)
+
+	### Loop over the spine points
+	for ii in range(0,n_spine):
+
+		### If the spine point is not the first then we construct the length along the filament
+		if(ii>0):
+			length[ii] = length[ii-1] + numpy.sqrt( (x[ii]-x[ii-1])**2 + (y[ii]-y[ii-1])**2 )
+
+		### Store co-ordinates of the spine point
+		x0 = int(x[ii])
+		y0 = int(y[ii])
+
+		### Set up profile
+		profile = numpy.zeros(2*n_pix + 1)
 	
 		### Find the gradient at this spine point and using it as a normal define a plane perpendicular to the spine
 		a = 1
@@ -1005,132 +1119,108 @@ def Straighten_filament(spine, Map, n_pix,order,max_dist):
 		norm = numpy.array([a,b],dtype=numpy.double)
 		plane_const = numpy.sum(norm*spine[ii,:]) 
 
-		### Define the box around the spine point to find positions to map onto the radial profile
-		ymin = max(y0 - n_pix,0)
-		xmin = max(x0 - n_pix,0)
-		ymax = min(y0 + n_pix,numpy.shape(Map)[1])
-		xmax = min(x0 + n_pix,numpy.shape(Map)[0])
+		### Construct the evaluation points along the normal line
+		m = -a/b
+		xmax = x0 + numpy.sqrt(max_dist**2/(m*m + 1))
+		xmin = x0 - numpy.sqrt(max_dist**2/(m*m + 1))
+		x_norm = numpy.linspace(xmin,xmax,2*n_pix + 1)
+		y_norm = m*x_norm - m*x0 + y0
 
-		### Tangent has a negative slope
-		if(-float(b)/a > 0):
+		### Loop over the evaluation points
+		for jj in range(0,2*n_pix + 1):
+			
+			### Find the co-ordinates of the pixel in which the evaluation point lies
+			xx = int(x_norm[jj])
+			yy = int(y_norm[jj])
 
-			### Look at the right side of the profile
-			for xx in range(xmin,x0+max_dist):
-				for yy in range(ymin,y0):
+			### Calculate the derivatives for the interpolation
+			dfdx = (Map[xx+1,yy] - Map[xx-1,yy])/2
+			d2fdx2 = (Map[xx+2,yy] + Map[xx-2,yy] - 2*Map[xx,yy])/4
 
-					### Calculate distance between the point under consideration and the plane
-					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
+			dfdy = (Map[xx,yy+1] - Map[xx,yy-1])/2
+			d2fdy2 = (Map[xx,yy+2] + Map[xx,yy-2] - 2*Map[xx,yy])/4
 
-					### If the distance to the plane is low then the point is counted towards the radial profile
-					if(dist_to_norm < max_dist):
+			d2fdxdy = (Map[xx+1,yy+1] - Map[xx-1,yy+1] - Map[xx+1,yy-1] + Map[xx-1,yy-1])/4
 
-						### Locate the position on the plane which is closest to this pixel
-						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
-						x_plane = xx - alpha*a
-						y_plane = yy - alpha*b
+			### Find the distance between the pixel and the evaluation point
+			dx = x_norm[jj] - xx
+			dy = y_norm[jj] - yy
 
-						### Calculate the distance along the plane from the spine point
-						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
-						
-						### Place the point on the radial profile at the correct distance
-						d = numpy.int(dist) - 1
-						if(d < n_pix and d>=0):			
-							right_profile[d] = right_profile[d] + Map[xx,yy]
-							right_num[d] = right_num[d] + 1
+			### Second order Taylor expansion
+			profile[jj] = Map[xx,yy] + dfdx*dx + dfdy*dy + 0.5*(d2fdx2*dx**2 + 2*d2fdxdy*dx*dy + d2fdy2*dy**2)
+
+		### Flip the profile if the gradient of the normal is negative
+		if(-a/b < 0):
+			profile = profile[::-1]
+			
+		Str_fil[:,ii] = profile
 
 
-			### Look at the left side of the profile
-			for xx in range(x0-max_dist,xmax):
-				for yy in range(y0,ymax):
+	### Construct radial position array
+	radial = numpy.linspace(-max_dist,max_dist,2*n_pix+1)
 
-					### Calculate distance between the point under consideration and the plane
-					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
-
-					### If the distance to the plane is low then the point is counted towards the radial profile
-					if(dist_to_norm < max_dist):
-
-						### Locate the position on the plane which is closest to this pixel
-						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
-						x_plane = xx - alpha*a
-						y_plane = yy - alpha*b
-
-						### Calculate the distance along the plane from the spine point
-						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
-
-						### Place the point on the radial profile at the correct distance
-						d = numpy.int(dist) - 1
-						if(d < n_pix and d>=0):
-							left_profile[d] = left_profile[d] + Map[xx,yy]
-							left_num[d] = left_num[d] + 1					
+	return Str_fil, length, radial
 
 
 
-		### Tangent has a positive slope
-		if(-float(b)/a < 0):
-
-			### Look at the right side of the profile
-			for xx in range(x0-max_dist,xmax):
-				for yy in range(ymin,y0+1):
-
-					### Calculate distance between the point under consideration and the plane
-					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
-
-					### If the distance to the plane is low then the point is counted towards the radial profile
-					if(dist_to_norm < max_dist):
-
-						### Locate the position on the plane which is closest to this pixel
-						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
-						x_plane = xx - alpha*a
-						y_plane = yy - alpha*b
-
-						### Calculate the distance along plane from the spine point
-						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
-
-						### Place the point on the radial profile at the correct distance
-						d = numpy.int(dist) - 1
-						if(d < n_pix and d>=0):
-							right_profile[d] = right_profile[d] + Map[xx,yy]
-							right_num[d] = right_num[d] + 1
-
-			### Look at the left side of the profile
-			for xx in range(xmin,x0+max_dist):
-				for yy in range(y0,ymax):
-
-					### Calculate distance between the point under consideration and the plane
-					dist_to_norm = numpy.fabs(a*xx + b*yy - plane_const)/numpy.sqrt(numpy.sum(norm*norm))
-
-					### If the distance to the plane is low then the point is counted towards the radial profile
-					if(dist_to_norm < max_dist):
-
-						### Locate the position on the plane which is closest to this pixel
-						alpha = (xx*a + yy*b - plane_const) / numpy.sum(norm*norm)
-						x_plane = xx - alpha*a
-						y_plane = yy - alpha*b
-
-						### Calculate the distance along plane from the spine point
-						dist = numpy.sqrt((x0-x_plane)**2 + (y0-y_plane)**2)
-
-						### Place the point on the radial profile at the correct distance
-						d = numpy.int(dist) - 1
-						if(d < n_pix and d>=0):
-							left_profile[d] = left_profile[d] + Map[xx,yy]
-							left_num[d] = left_num[d] + 1
 
 
-		### Take the mean of the contributions at each distance 
-
-		left_profile = left_profile / left_num
-		right_profile = right_profile / right_num
-
-		### Place the profile in the 2D array and flip the profile around
-		Str_fil[:n_pix,ii-1] = left_profile[::-1]
-		Str_fil[n_pix,ii-1] = Map[x0,y0]
-		Str_fil[n_pix+1:,ii-1] = right_profile	
-
-		Str_fil[:,ii-1] = Str_fil[::-1,ii-1]
 
 
-	return Str_fil
+
+
+
+### A function map core position onto the straightened filament
+### Inputs:
+### spine        (2d-array)             An ordered list of x,y co-ordinates of the spine points, shape n by 2 for n spine points
+### pos          (2d-array)             The 2d array containing the x and y positions of cores associated with this filament     
+###
+### core_pos     (2d-array)             The 2d array containing the x and y position of cores now mapped into the r-l co-ordinates of the straighten filament
+
+def Map_cores(spine, pos): 
+
+	### Make an empty array for the new core positions
+	core_pos = numpy.zeros_like(pos)	
+	n_cores = len(pos[:,0])
+
+	### Loop over each core and map
+	for ii in range(0,n_cores):
+
+		### Unpack x and y
+		x = pos[ii,0]
+		y = pos[ii,1]
+
+		### Set min_dist to a large number and reset the index
+		min_dist = 1e99
+		min_dist_index = 1
+
+		### Loop over all spine points to find the closest one
+		for jj in range(0,len(spine[:,0])):
+			
+			### Unpack spine x and y
+			xs = spine[jj,0]
+			ys = spine[jj,1]
+
+			### Determine distance between core and spine point
+			dist = numpy.sqrt( (x-xs)**2 + (y-ys)**2 )
+
+			### If distance is smaller than min distance then store it
+			if(dist<min_dist):
+				min_dist = dist
+				min_dist_index = jj
+
+		### Once we go over all spine points we know the r-l co-ordinates of the core
+		core_pos[ii,0]=min_dist
+		core_pos[ii,1]=min_dist_index
+		
+	return core_pos
+
+
+
+
+
+
+
 
 
 
