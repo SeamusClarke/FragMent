@@ -81,6 +81,23 @@ sep, w = FragMent.ApproxTwoPoint(pos,nruns,boundary,sep_limit,op_crit)
 
 Both functions return the separation array, *sep*, the separations at which the two-point correlation function is evaluated; and *w*, the two-point correlation function itself.
 
+### N<sup>th</sup> nearest neighbour
+
+The N<sup>th</sup> nearest neighbour is called using the function
+```
+NNN_sep = FragMent.NNNS(pos)
+```
+
+
+### Fourier power spectrum
+
+The Fourier power spectrum requires the map values along the spine. It is called by the command
+```
+k,power = FragMent.FT_Spine(spine)
+```
+It returns the array of wavenumbers, *k*, and the power spectrum at those wavenumbers, *power*. The first element of both of these arrays must be removed as it corresponds to the *k*=0 mode. The length scale, *l*, that corresponds to wavenumber *k* is here given by *l*=*L*/*k*, where *L* is the length of the spine. 
+
+
 
 
 
