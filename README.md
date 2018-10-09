@@ -93,7 +93,6 @@ mean_seps = numpy.mean(NNN_sep, axis=0)
 std_seps = numpy.std(NNN_sep, axis=0)
 ```
 
-
 ### Fourier power spectrum
 
 The Fourier power spectrum requires the map values along the spine. It is called by the command
