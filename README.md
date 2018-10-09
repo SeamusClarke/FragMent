@@ -55,7 +55,7 @@ p_median, p_mean = FragMent.Stat_Sig(nn_seps, "NNS", boundary, nruns, sep_limit)
 ks_stat, p_ks = FragMent.KS_test(nn_seps, "NNS", boundary, nruns, sep_limit)
 ad_stat, crit_vals, p_ad = FragMent.AD_test(nn_seps, "NNS", boundary, nruns, sep_limit)
 ```
-The option "NNS" is included to tell each function that the nearest neighbour separation method is being tested. The *boundary* array is as described above. *nruns* is the number of random realisations used to construct the null hypothesis, a typical value is 10,000, although the higher the better. *sep_limit* is the smallest separation that can be detected; for observations it would be 1 or 2 beamsizes. These functions return the p-values for each of the tests. For the Kolmogorov-Smirnov test, it also returns the K-S statistic. For the Anderson-Darling test it returns the A-D statistic as well as a critical value array which shows the values of the A-D statistic corresponding to the significance levels: 25%, 10%, 5%, 2.5%, 1%.
+The option "NNS" is included to tell each function that the nearest neighbour separation method is being tested. The *boundary* array is as described above. *nruns* is the number of random realisations used to construct the null hypothesis, a typical value is 10,000, although the higher the better (but slower). *sep_limit* is the smallest separation that can be detected; for observations it would be 1 or 2 beamsizes. These functions return the p-values for each of the tests. For the Kolmogorov-Smirnov test, it also returns the K-S statistic. For the Anderson-Darling test it returns the A-D statistic as well as a critical value array which shows the values of the A-D statistic corresponding to the significance levels: 25%, 10%, 5%, 2.5%, 1%.
 
 ### Minimum spanning tree
 
@@ -77,7 +77,11 @@ or an approximate KDE
 ```
 sep, w = FragMent.ApproxTwoPoint(pos,nruns,boundary,sep_limit,op_crit)
 ```
-*pos*, *nruns*, *boundary* and *sep_limit* are as before. *op_crit* is the critical opening distance used for the tree when constructing the approximate KDEs. Its value depends on the data size, *op_crit* > 10<sup>4</sup> / *N*, where *N* is the number of data points used to construct the KDE, *N* = *nruns* x *ncores* <sup>2</sup>.
+*pos*, *nruns*, *boundary* and *sep_limit* are as before. *op_crit* is the critical opening distance used for the tree when constructing the approximate KDEs. Its value depends on the data size, *op_crit* > 10<sup>4</sup> / *N*, where *N* is the number of data points used to construct the KDE, *N* = *nruns* x *ncores* <sup>2</sup>. The approximate function should typically be used as it is 50 to 100 times faster than the exact. 
+
+Both functions return the separation array, *sep*, the separations at which the two-point correlation function is evaluated; and *w*, the two-point correlation function itself.
+
+
 
 
 
