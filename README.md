@@ -87,6 +87,11 @@ The N<sup>th</sup> nearest neighbour is called using the function
 ```
 NNN_sep = FragMent.NNNS(pos)
 ```
+*NNN_sep* is a 2D array containing the neighbour separations for each core. It is reduced to the mean and standard deviation for each N<sup>the</sup> neighbour using the following lines
+```
+mean_seps = numpy.mean(NNN_sep, axis=0)
+std_seps = numpy.std(NNN_sep, axis=0)
+```
 
 
 ### Fourier power spectrum
