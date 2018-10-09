@@ -74,10 +74,10 @@ The two-point correlation function is called using either an exact KDE
 sep, w = FragMent.TwoPoint(pos,nruns,boundary,sep_limit)
 ```
 or an approximate KDE
-'''
+```
 sep, w = FragMent.ApproxTwoPoint(pos,nruns,boundary,sep_limit,op_crit)
-'''
-The *pos*, *nruns*, *boundary* and *sep_limit* are as before. *op_crit* is the critical opening distance used for the tree when constructing the approximate KDEs. Its value depends on the data size, *op_crit* > 10<sup>4</sup> / *N*, where *N* is the number of data points used to construct the KDE, *N* = *nruns* x *ncores* <sup>2</sup>.
+```
+*pos*, *nruns*, *boundary* and *sep_limit* are as before. *op_crit* is the critical opening distance used for the tree when constructing the approximate KDEs. Its value depends on the data size, *op_crit* > 10<sup>4</sup> / *N*, where *N* is the number of data points used to construct the KDE, *N* = *nruns* x *ncores* <sup>2</sup>.
 
 
 
