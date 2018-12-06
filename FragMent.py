@@ -1206,11 +1206,23 @@ def Map_cores(spine, pos):
 
 			### If distance is smaller than min distance then store it
 			if(dist<min_dist):
+
+				dxs = spine[jj+1,0] - xs
+				dys = spine[jj+1,1] - ys
+
+				dxc = x-xs
+				dyc = y-ys
+
+				if(dxs*dyc - dxc*dys > 0):
+					direction = -1
+				else:
+					direction = 1
+
 				min_dist = dist
 				min_dist_index = jj
 
 		### Once we go over all spine points we know the r-l co-ordinates of the core
-		core_pos[ii,0]=min_dist
+		core_pos[ii,0]=direction * min_dist
 		core_pos[ii,1]=min_dist_index
 		
 	return core_pos
