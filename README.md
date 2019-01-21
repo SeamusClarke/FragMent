@@ -4,6 +4,8 @@ FragMent is a python/C module which collates a number techniques used to study f
 
 The accompanying paper can be found [here](http://adsabs.harvard.edu/abs/2019arXiv190106205C). It details the sensitivities of each method and explains in more detail a number of the procedures one should use when analysing fragmentation.
 
+While the code was designed to investigate filament fragmentation the functions are general and may be used for any set of 2D points to study more general cases of fragmentation. 
+
 ## Dependencies 
 
 FragMent requires 4 common libraries to be installed:
@@ -83,7 +85,7 @@ The N<sup>th</sup> nearest neighbour is called using the function
 ```
 NNN_sep = FragMent.NNNS(pos)
 ```
-*NNN_sep* is a 2D array containing the neighbour separations for each core. It is reduced to the mean and standard deviation for each N<sup>the</sup> neighbour using the following lines
+*NNN_sep* is a 2D array containing the neighbour separations for each core. It is reduced to the mean and standard deviation for each N<sup>th</sup> neighbour using the following lines
 ```
 mean_seps = numpy.mean(NNN_sep, axis=0)
 std_seps = numpy.std(NNN_sep, axis=0)
@@ -99,7 +101,7 @@ It returns the array of wavenumbers, *k*, and the power spectrum at those wavenu
 
 ### Statistical significance tests
 
-Three functions are used to perform null hypothesis tests of the results from the nearest neighbour and minimum spanning tree method. These construct distributions assuming the null that there is no correlation between core locations, i.e. they are random, and returning p-values.
+Three functions are used to perform null hypothesis tests of the results from the nearest neighbour and minimum spanning tree method. These construct distributions assuming the null that there is no correlation between core locations, i.e. they are random, and return p-values.
 
 #### Kolmogorov-Smirnov test 
 
