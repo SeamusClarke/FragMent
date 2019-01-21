@@ -149,7 +149,7 @@ print "The results are plotted in the file FT_results.png"
 
 ### Frequentist model selection
 
-### Place boundaries on the ten parameters of the two-tier fragmentation model (the first 4 are the boundaries for the single-tier model)
+### Place boundaries on the five parameters of the two-tier fragmentation model (the first 4 entries are the boundaries for the single-tier model)
 bound = numpy.zeros(10)
 
 ### Boundaries for the mean of the first Gaussian
