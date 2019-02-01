@@ -565,6 +565,7 @@ def TwoPoint(pos,nruns,bounds,lower_lim):
 ### Outputs:
 ### sep       (array)                   The array of separations at which the two-point correlation function has been evaluated
 ### w         (array)                   The two-point correlation function 
+### sigma_w   (array)                   The error on the two-point correlation function (Taken from Grazian et al. 2006, A&A, 453, 507-515)
 
 def ApproxTwoPoint(pos,nruns,bounds,lower_lim,error):
 
@@ -608,8 +609,11 @@ def ApproxTwoPoint(pos,nruns,bounds,lower_lim,error):
 	### Construct the two-point correlation function from the DD, DR and RR arrays
 	w = (DD - 2*DR + RR)/RR	
 
+	### Determine the error on the two-point correlation function
+	sigma_w = numpy.sqrt((1+w)/(n_pos*(n_pos-1)*DD+1e-10))
+
 	### Return the two-point correlation function and the array of separations at which it has been evaluated
-	return sep, w
+	return sep, w, sigma_w
 
 
 
@@ -1047,7 +1051,7 @@ def Straighten_filament_weight(spine, Map, n_pix, max_dist, order, h_length):
 		profile = profile / profile_weight
 
 		### Flip the profile if the gradient of the normal is negative
-		if(-a/b < 0):
+		if(-a/b > 0):
 			profile = profile[::-1]
 			
 		Str_fil[:,ii] = profile
@@ -1150,7 +1154,7 @@ def Straighten_filament_interp(spine, Map, n_pix, max_dist, order):
 			profile[jj] = Map[xx,yy] + dfdx*dx + dfdy*dy + 0.5*(d2fdx2*dx**2 + 2*d2fdxdy*dx*dy + d2fdy2*dy**2)
 
 		### Flip the profile if the gradient of the normal is negative
-		if(-a/b < 0):
+		if(-a/b > 0):
 			profile = profile[::-1]
 			
 		Str_fil[:,ii] = profile
@@ -1174,14 +1178,24 @@ def Straighten_filament_interp(spine, Map, n_pix, max_dist, order):
 ### Inputs:
 ### spine        (2d-array)             An ordered list of x,y co-ordinates of the spine points, shape n by 2 for n spine points
 ### pos          (2d-array)             The 2d array containing the x and y positions of cores associated with this filament     
+### order        (int)                  The order of polynomial used to fit the spine points 
 ###
 ### core_pos     (2d-array)             The 2d array containing the x and y position of cores now mapped into the r-l co-ordinates of the straighten filament
 
-def Map_cores(spine, pos): 
+def Map_cores(spine, pos, order): 
 
 	### Make an empty array for the new core positions
 	core_pos = numpy.zeros_like(pos)	
 	n_cores = len(pos[:,0])
+
+	### Extract spine positions and fit with a polynomial
+	xs = spine[:,0]
+	ys = spine[:,1]
+	p = numpy.polyfit(xs,ys,order)
+	f = numpy.poly1d(p)
+	p2 = p[:-1]
+	q = numpy.arange(1,order+1,1)
+	grad = numpy.poly1d(p2*q[::-1])
 
 	### Loop over each core and map
 	for ii in range(0,n_cores):
@@ -1195,7 +1209,7 @@ def Map_cores(spine, pos):
 		min_dist_index = 1
 
 		### Loop over all spine points to find the closest one
-		for jj in range(0,len(spine[:,0])):
+		for jj in range(0,len(spine[:,0])-1):
 			
 			### Unpack spine x and y
 			xs = spine[jj,0]
@@ -1207,13 +1221,14 @@ def Map_cores(spine, pos):
 			### If distance is smaller than min distance then store it
 			if(dist<min_dist):
 
-				dxs = spine[jj+1,0] - xs
-				dys = spine[jj+1,1] - ys
+				### Determine if the core appears on the right or the left and store this as the direction variable
+				a = 1
+				b = grad(xs)
 
 				dxc = x-xs
 				dyc = y-ys
 
-				if(dxs*dyc - dxc*dys > 0):
+				if(a*dyc - dxc*b > 0):
 					direction = -1
 				else:
 					direction = 1
