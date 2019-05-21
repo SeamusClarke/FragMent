@@ -107,12 +107,13 @@ sep, w = FragMent.TwoPoint(pos,nruns,boundary,lower_lim)
 
 ### Calculate the approximate two point correlation function
 op_crit = 1e-2
-sep, wa = FragMent.ApproxTwoPoint(pos,nruns,boundary,lower_lim,op_crit)
+sep, wa, sig_w = FragMent.ApproxTwoPoint(pos,nruns,boundary,lower_lim,op_crit)
 
 ### Plot results
 plt.figure(2)
 plt.plot(sep,w,"b",label="Exact")
 plt.plot(sep,wa,"k--",label="Approx")
+plt.fill_between(sep,wa-sig_w,wa+sig_w,alpha=0.5)
 plt.xlabel("Separation")
 plt.ylabel("Two point correlation function")
 plt.legend(loc="best")
@@ -279,7 +280,7 @@ pos[3,0] = spine[100,0] + 2
 pos[3,1] = spine[100,1] - 3
 
 ### Map the cores to the spine
-cpos = FragMent.Map_cores(spine,pos)
+cpos = FragMent.Map_cores(spine,pos,10)
 
 ### Straighten the filament using the interpolation and weighted average methods
 s,l,r = FragMent.Straighten_filament_interp(spine,Map.T,90,30,10)
