@@ -551,6 +551,76 @@ void ApproxTwoPoint(const double *pos_x, const double *pos_y, int size, int nrun
 
 
 
+/// A function to return a nrun sets of  npoints random points within a boundary box with separations greater than some lower limit
+
+void ReturnRandomPoints(int nruns, int npoints, const double *bounds, double lower_lim, double *xpos, double *ypos){
+
+	double xmin,xmax,ymin,ymax;
+
+	xmin = bounds[0];
+	xmax = bounds[1];	
+	ymin = bounds[2];
+	ymax = bounds[3];
+
+	int counter = 0;
+
+	int ii,jj;
+
+	double rpos_x[npoints];
+	double rpos_y[npoints];
+
+	double dist;
+	int flag;
+
+	// Seed for random number generator 
+	srand(1);
+
+	while(counter<nruns){
+
+		flag = 0;
+
+		for(ii=0;ii<npoints;ii++){
+
+			rpos_x[ii] = (xmax-xmin)*(float)rand()/(float)(RAND_MAX) + xmin;
+			rpos_y[ii] = (ymax-ymin)*(float)rand()/(float)(RAND_MAX) + ymin;
+
+		}
+
+		for(ii=0;ii<npoints-1;ii++){
+
+			for(jj=ii+1;jj<npoints;jj++){
+
+				dist = sqrt( (rpos_x[ii]-rpos_x[jj])*(rpos_x[ii]-rpos_x[jj]) + (rpos_y[ii]-rpos_y[jj])*(rpos_y[ii]-rpos_y[jj]) ); 
+
+				//printf("%lf \n", dist);
+
+				if(dist<lower_lim){
+
+					flag = 1;
+					break;
+				}
+
+			}
+
+		}
+
+		if(flag==0){
+
+			for(ii=0;ii<npoints;ii++){
+
+				xpos[counter*npoints + ii] = rpos_x[ii];
+				ypos[counter*npoints + ii] = rpos_y[ii];
+
+			}
+
+			counter = counter + 1;
+
+		}
+
+
+	}
+
+}
 
 
 

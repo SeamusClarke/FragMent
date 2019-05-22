@@ -47,13 +47,6 @@ import emcee
 
 def AD_test(dist,method,bounds,num,lower_lim):
 
-	### Unpack the bounds array
-	xmin = bounds[0]
-	xmax = bounds[1]
-
-	ymin = bounds[2]
-	ymax = bounds[3]
-
 	### Finding the number of cores to randomly place from the input distribution
 	if(method=="NNS"):
 		num_cores = len(dist)
@@ -67,12 +60,30 @@ def AD_test(dist,method,bounds,num,lower_lim):
 	tot_num = 0
 	tot_sep = numpy.array([],dtype=float)
 
-	### Loop over each random realisation
-	while(tot_num<num):
 
-		### Place the cores randomly in the box
-		x = (xmax - xmin)*numpy.random.random(num_cores) + xmin
-		y = (ymax - ymin)*numpy.random.random(num_cores) + ymin
+	### Call the C program to get the random positions in the boundary box
+	xpos = numpy.zeros(num*num_cores,dtype=numpy.double)
+	ypos = numpy.zeros(num*num_cores,dtype=numpy.double)
+	bounds = numpy.array(bounds,dtype=numpy.double)
+	lower_lim = numpy.double(lower_lim)
+
+	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	ran_point = lib.ReturnRandomPoints
+	ran_point.restype = None
+
+	ran_point.argtypes = [ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_double,  ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+
+	ran_point(num,num_cores,bounds,lower_lim,xpos,ypos)
+
+	xpos = numpy.reshape(xpos, (num,num_cores))
+	ypos = numpy.reshape(ypos, (num,num_cores))
+
+	### Loop over each random realisation
+	for ii in range(0,num):
+
+		### Repackage the core locations
+		x = xpos[ii,:]
+		y = ypos[ii,:]
 		pos = numpy.column_stack((x,y))
 
 		### Use the same method to analyse the random cores as the data set
@@ -81,12 +92,7 @@ def AD_test(dist,method,bounds,num,lower_lim):
 		if(method=="MST"):
 			seps, mst = MST(pos)
 
-		### Check that no randomly placed cores are too close to each other
-		if(len(seps)!=numpy.sum(seps>lower_lim)):
-			continue
-
-		### If the cores are fine add them to the array for the null distribution
-		tot_num = tot_num + 1
+		### Add the separations to the array for the null distribution
 		tot_sep = numpy.concatenate((tot_sep,seps))
 
 	### Perform the AD test between the data set distribution and the null distribution
@@ -117,13 +123,6 @@ def AD_test(dist,method,bounds,num,lower_lim):
 
 def KS_test(dist,method,bounds,num,lower_lim):
 
-	### Unpack the bounds array
-	xmin = bounds[0]
-	xmax = bounds[1]
-
-	ymin = bounds[2]
-	ymax = bounds[3]
-
 	### Finding the number of cores to randomly place from the input distribution
 	if(method=="NNS"):
 		num_cores = len(dist)
@@ -133,16 +132,34 @@ def KS_test(dist,method,bounds,num,lower_lim):
 	### Initialise a random seed
 	numpy.random.seed(1)
 
-	### Create counter and array for the separations from randomly placed cores
+	### Create counter and array for the separations from randomly placed cores 
 	tot_num = 0
 	tot_sep = numpy.array([],dtype=float)
 
-	### Loop over each random realisation
-	while(tot_num<num):
 
-		### Place the cores randomly in the box
-		x = (xmax - xmin)*numpy.random.random(num_cores) + xmin
-		y = (ymax - ymin)*numpy.random.random(num_cores) + ymin
+	### Call the C program to get the random positions in the boundary box
+	xpos = numpy.zeros(num*num_cores,dtype=numpy.double)
+	ypos = numpy.zeros(num*num_cores,dtype=numpy.double)
+	bounds = numpy.array(bounds,dtype=numpy.double)
+	lower_lim = numpy.double(lower_lim)
+
+	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	ran_point = lib.ReturnRandomPoints
+	ran_point.restype = None
+
+	ran_point.argtypes = [ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_double,  ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+
+	ran_point(num,num_cores,bounds,lower_lim,xpos,ypos)
+
+	xpos = numpy.reshape(xpos, (num,num_cores))
+	ypos = numpy.reshape(ypos, (num,num_cores))
+
+	### Loop over each random realisation
+	for ii in range(0,num):
+
+		### Repackage the core locations
+		x = xpos[ii,:]
+		y = ypos[ii,:]
 		pos = numpy.column_stack((x,y))
 
 		### Use the same method to analyse the random cores as the data set
@@ -151,12 +168,7 @@ def KS_test(dist,method,bounds,num,lower_lim):
 		if(method=="MST"):
 			seps, mst = MST(pos)
 
-		### Check that no randomly placed cores are too close to each other
-		if(len(seps)!=numpy.sum(seps>lower_lim)):
-			continue
-
-		### If the cores are fine add them to the array for the null distribution
-		tot_num = tot_num + 1
+		### Add the separations to the array for the null distribution
 		tot_sep = numpy.concatenate((tot_sep,seps))
 
 
@@ -187,20 +199,13 @@ def KS_test(dist,method,bounds,num,lower_lim):
 
 def Stat_Sig(dist, method, bounds, num, lower_lim):
 
-	### Unpack the bounds array
-	xmin = bounds[0]
-	xmax = bounds[1]
-
-	ymin = bounds[2]
-	ymax = bounds[3]
-
 	### Create empty lists for the medians, means, standard deviation and interquartile ranges of the randomly placed core distributions
 	med_sep = []
 	mea_sep = []
 	std_sep = []
 	iqr_sep = []
 
-	### Finding the number of cores to randomly place from the input distribution	
+	### Finding the number of cores to randomly place from the input distribution
 	if(method=="NNS"):
 		num_cores = len(dist)
 	if(method=="MST"):
@@ -209,15 +214,34 @@ def Stat_Sig(dist, method, bounds, num, lower_lim):
 	### Initialise a random seed
 	numpy.random.seed(1)
 
-	### Create counter for the number of random realisations
+	### Create counter and array for the separations from randomly placed cores 
 	tot_num = 0
+	tot_sep = numpy.array([],dtype=float)
+
+
+	### Call the C program to get the random positions in the boundary box
+	xpos = numpy.zeros(num*num_cores,dtype=numpy.double)
+	ypos = numpy.zeros(num*num_cores,dtype=numpy.double)
+	bounds = numpy.array(bounds,dtype=numpy.double)
+	lower_lim = numpy.double(lower_lim)
+
+	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	ran_point = lib.ReturnRandomPoints
+	ran_point.restype = None
+
+	ran_point.argtypes = [ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_double,  ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+
+	ran_point(num,num_cores,bounds,lower_lim,xpos,ypos)
+
+	xpos = numpy.reshape(xpos, (num,num_cores))
+	ypos = numpy.reshape(ypos, (num,num_cores))
 
 	### Loop over each random realisation
-	while(tot_num<num):
+	for ii in range(0,num):
 
-		### Place the cores randomly in the box
-		x = (xmax - xmin)*numpy.random.random(num_cores) + xmin
-		y = (ymax - ymin)*numpy.random.random(num_cores) + ymin
+		### Repackage the core locations
+		x = xpos[ii,:]
+		y = ypos[ii,:]
 		pos = numpy.column_stack((x,y))
 
 		### Use the same method to analyse the random cores as the data set
@@ -226,10 +250,6 @@ def Stat_Sig(dist, method, bounds, num, lower_lim):
 		if(method=="MST"):
 			seps, mst = MST(pos)
 
-		### Check that no randomly placed cores are too close to each other
-		if(len(seps)!=numpy.sum(seps>lower_lim)):
-			continue
-
 		### Add the average and width measurements for this random realisation to the storage list
 		med_sep.append(numpy.median(seps))
 		iqr_sep.append(iqr(seps))
@@ -237,8 +257,6 @@ def Stat_Sig(dist, method, bounds, num, lower_lim):
 		mea_sep.append(numpy.mean(seps))
 		std_sep.append(numpy.std(seps))
 
-		### Update counter
-		tot_num = tot_num + 1
 
 	### Transform lists to arrays and then stack them
 	med_sep = numpy.array(med_sep,dtype=float)
@@ -1441,3 +1459,4 @@ def post_two_gauss(params, data, bound, prior):
 
 		### Return value
 		return post
+

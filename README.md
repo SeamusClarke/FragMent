@@ -183,9 +183,9 @@ It has the same inputs and outputs as the interpolation method but includes one 
 
 Once the filaments are straightened the cores must be mapped into this straightened filament space. This is done by using the function:
 ```
-core_pos = FragMent.Map_cores(spine, pos) 
+core_pos = FragMent.Map_cores(spine, pos, order) 
 ```
-The inputs are: *spine*, the ordered list of spine pixel values used in the straightening function; and *pos* the 2D array of core positions. The output is *core_pos*, the 2D array of core positions in the length-radius space of the straight filament. It is these positions which should act as inputs to the fragmentation analysis functions.
+The inputs are: *spine*, the ordered list of spine pixel values used in the straightening function; *pos* the 2D array of core positions, and *order*, the order of the polynomial used to fit the spine points when straightening. The output is *core_pos*, the 2D array of core positions in the length-radius space of the straight filament. It is these positions which should act as inputs to the fragmentation analysis functions.
 
 ## Acknowledgements 
 This code was produced with the support of the ERC starting grant No. 679852 "RADFEEDBACK"

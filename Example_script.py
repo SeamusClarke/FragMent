@@ -25,7 +25,7 @@ nn_seps = FragMent.NNS(pos)
 
 ### Statistical significance of the results
 nruns = 1000
-sep_limit = 0.02
+sep_limit = 0.06
 p_median, p_mean = FragMent.Stat_Sig(nn_seps, "NNS", boundary, nruns, sep_limit)
 ks_stat, p_ks = FragMent.KS_test(nn_seps, "NNS", boundary, nruns, sep_limit)
 ad_stat, crit_vals, p_ad = FragMent.AD_test(nn_seps, "NNS", boundary, nruns, sep_limit)
