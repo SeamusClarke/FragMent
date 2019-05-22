@@ -996,6 +996,9 @@ def Evidence_explicit(spacings,bound,prior_one, prior_two,n):
 
 def Straighten_filament_weight(spine, Map, n_pix, max_dist, order, h_length): 
 
+	### Look to see if we should prune the spine just in case
+	spine = Prune_spine(spine)
+
 	### Unpack the spine array and determine the number of spine points
 	x = spine[:,0]
 	y = spine[:,1]
@@ -1052,9 +1055,15 @@ def Straighten_filament_weight(spine, Map, n_pix, max_dist, order, h_length):
 			xn = int(x_norm[jj])
 			yn = int(y_norm[jj])
 
+			if(xn>numpy.shape(Map)[0]-1 or yn>numpy.shape(Map)[1]-1 or xn<0 or yn<0):
+				continue
+
 			### Loop over the pixels near the evaluation point
 			for xx in range(xn-eval_dist,xn+eval_dist+1):
 				for yy in range(yn-eval_dist,yn+eval_dist+1):
+
+					if(xx>numpy.shape(Map)[0]-1 or yy>numpy.shape(Map)[1]-1 or xx<0 or yy<0):
+						continue
 
 					### Calculate distance between the evaluation point and the pixels nearby, and therefore the pixel's weight
 					dist = numpy.sqrt( (xx-x_norm[jj])**2 + (yy-y_norm[jj])**2 )
@@ -1102,6 +1111,9 @@ def Straighten_filament_weight(spine, Map, n_pix, max_dist, order, h_length):
 ### radial       (array)                The radius at each evaluation point
 
 def Straighten_filament_interp(spine, Map, n_pix, max_dist, order): 
+
+	### Look to see if we should prune the spine just in case
+	spine = Prune_spine(spine)
 
 	### Unpack the spine array and determine the number of spine points
 	x = spine[:,0]
@@ -1155,21 +1167,25 @@ def Straighten_filament_interp(spine, Map, n_pix, max_dist, order):
 			xx = int(x_norm[jj])
 			yy = int(y_norm[jj])
 
-			### Calculate the derivatives for the interpolation
-			dfdx = (Map[xx+1,yy] - Map[xx-1,yy])/2
-			d2fdx2 = (Map[xx+2,yy] + Map[xx-2,yy] - 2*Map[xx,yy])/4
+			if(xx>numpy.shape(Map)[0]-3 or xx<2 or yy>numpy.shape(Map)[1]-3 or yy<2):
+				profile[jj] = 0
 
-			dfdy = (Map[xx,yy+1] - Map[xx,yy-1])/2
-			d2fdy2 = (Map[xx,yy+2] + Map[xx,yy-2] - 2*Map[xx,yy])/4
+			else:
+				### Calculate the derivatives for the interpolation
+				dfdx = (Map[xx+1,yy] - Map[xx-1,yy])/2
+				d2fdx2 = (Map[xx+2,yy] + Map[xx-2,yy] - 2*Map[xx,yy])/4
 
-			d2fdxdy = (Map[xx+1,yy+1] - Map[xx-1,yy+1] - Map[xx+1,yy-1] + Map[xx-1,yy-1])/4
+				dfdy = (Map[xx,yy+1] - Map[xx,yy-1])/2
+				d2fdy2 = (Map[xx,yy+2] + Map[xx,yy-2] - 2*Map[xx,yy])/4
 
-			### Find the distance between the pixel and the evaluation point
-			dx = x_norm[jj] - xx
-			dy = y_norm[jj] - yy
+				d2fdxdy = (Map[xx+1,yy+1] - Map[xx-1,yy+1] - Map[xx+1,yy-1] + Map[xx-1,yy-1])/4
 
-			### Second order Taylor expansion
-			profile[jj] = Map[xx,yy] + dfdx*dx + dfdy*dy + 0.5*(d2fdx2*dx**2 + 2*d2fdxdy*dx*dy + d2fdy2*dy**2)
+				### Find the distance between the pixel and the evaluation point
+				dx = x_norm[jj] - xx
+				dy = y_norm[jj] - yy
+
+				### Second order Taylor expansion
+				profile[jj] = Map[xx,yy] + dfdx*dx + dfdy*dy + 0.5*(d2fdx2*dx**2 + 2*d2fdxdy*dx*dy + d2fdy2*dy**2)
 
 		### Flip the profile if the gradient of the normal is negative
 		if(-a/b > 0):
@@ -1201,6 +1217,9 @@ def Straighten_filament_interp(spine, Map, n_pix, max_dist, order):
 ### core_pos     (2d-array)             The 2d array containing the x and y position of cores now mapped into the r-l co-ordinates of the straighten filament
 
 def Map_cores(spine, pos, order): 
+
+	### Look to see if we should prune the spine just in case
+	spine = Prune_spine(spine)
 
 	### Make an empty array for the new core positions
 	core_pos = numpy.zeros_like(pos)	
@@ -1272,6 +1291,82 @@ def Map_cores(spine, pos, order):
 ########################################################################################
 ################# Function which are not called from outside FragMent ##################
 ########################################################################################
+
+
+### A function which goes through as prones the filament spine of any unnecessary pixels 
+### Inputs:
+### spine         (2D array)               The pixel positions of the filament spine
+###
+### Outputs:
+### new_spine     (2D array)               The new list of pixel positions of the filament spine
+
+def Prune_spine(spine):
+
+	### Determine length of the spine
+	n = len(spine[:,0])
+
+	### initialise dummy counter
+	ii=0
+
+	### Make empty list which we fill with the new spine positions
+	new_x = []
+	new_y = []
+
+	### Unpack the original spine positions
+	x = spine[:,0]
+	y = spine[:,1]
+
+	### Start at the beginning of the spine
+	new_x.append(x[0])
+	new_y.append(y[0])
+
+	### Loop over the spine positions until we get to the end of the spine
+	while(ii<n-2):
+
+		### Determine the distance to the next spine point along
+		dx = x[ii+1] - x[ii]
+		dy = y[ii+1] - y[ii]
+
+		dist = numpy.sqrt(dx**2 + dy**2)
+
+		### If the next spine point is more than 1 pixel away then it is on the diagonal and so is fine, add it to the new spine array
+		if(dist>1):
+			new_x.append(x[ii+1])
+			new_y.append(y[ii+1])
+			ii=ii+1
+
+		### If the next spine point is right next to use, the one that is after it may be diagonal to us so let's check	
+
+		else:
+			
+			### Determine the distance to the spine point 2 along 
+			dx = x[ii+2] - x[ii]
+			dy = y[ii+2] - y[ii]
+
+			dist = numpy.sqrt(dx**2 + dy**2)
+
+			### If the distance is less than 2 pixels then it is diagonal to us and we can skip the spine pixel in the middle
+			if(dist<2):
+				new_x.append(x[ii+2])
+				new_y.append(y[ii+2])
+				ii=ii+2
+
+			### Otherwise we keep the spine pixel and proceed
+			else:
+				new_x.append(x[ii+1])
+				new_y.append(y[ii+1])
+				ii=ii+1
+
+
+
+	### Repackage the new spine positions into a 2D array and return it
+	new_spine = numpy.column_stack((new_x,new_y))
+
+	return new_spine
+
+
+
+
 
 
 
