@@ -1,4 +1,4 @@
-![alt text](https://github.com/SeamusClarke/FragMent/blob/master/Images/FragMent.png)
+![alt text](https://github.com/SeamusClarke/FragMent/Images/FragMent.png)
 
 # A code to study the fragmentation of filaments (FragMent)
 
