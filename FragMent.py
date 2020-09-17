@@ -67,7 +67,7 @@ def AD_test(dist,method,bounds,num,lower_lim):
 	bounds = numpy.array(bounds,dtype=numpy.double)
 	lower_lim = numpy.double(lower_lim)
 
-	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	lib = ctypes.cdll.LoadLibrary("FragMent_C.so")
 	ran_point = lib.ReturnRandomPoints
 	ran_point.restype = None
 
@@ -143,7 +143,7 @@ def KS_test(dist,method,bounds,num,lower_lim):
 	bounds = numpy.array(bounds,dtype=numpy.double)
 	lower_lim = numpy.double(lower_lim)
 
-	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	lib = ctypes.cdll.LoadLibrary("FragMent_C.so")
 	ran_point = lib.ReturnRandomPoints
 	ran_point.restype = None
 
@@ -225,7 +225,7 @@ def Stat_Sig(dist, method, bounds, num, lower_lim):
 	bounds = numpy.array(bounds,dtype=numpy.double)
 	lower_lim = numpy.double(lower_lim)
 
-	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	lib = ctypes.cdll.LoadLibrary("FragMent_C.so")
 	ran_point = lib.ReturnRandomPoints
 	ran_point.restype = None
 
@@ -548,7 +548,7 @@ def TwoPoint(pos,nruns,bounds,lower_lim):
 	RR = numpy.zeros(x_size, dtype=numpy.double)
 
 	### Communication between python and the underlying C code
-	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	lib = ctypes.cdll.LoadLibrary("FragMent_C.so")
 	twopoint = lib.TwoPoint
 	twopoint.restype = None
 	lower_lim = numpy.double(lower_lim)
@@ -615,7 +615,7 @@ def ApproxTwoPoint(pos,nruns,bounds,lower_lim,error):
 	RR = numpy.zeros(x_size, dtype=numpy.double)
 
 	### Communication between python and the underlying C code
-	lib = ctypes.cdll.LoadLibrary("./FragMent_C.so")
+	lib = ctypes.cdll.LoadLibrary("FragMent_C.so")
 	twopoint = lib.ApproxTwoPoint
 	twopoint.restype = None
 	lower_lim = numpy.double(lower_lim)

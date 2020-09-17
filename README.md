@@ -1,3 +1,5 @@
+![alt text](https://github.com/SeamusClarke/FragMent/blob/master/Images/FragMent.png)
+
 # A code to study the fragmentation of filaments (FragMent)
 
 FragMent is a python/C module which collates a number techniques used to study fragmentation in filaments. It also performs model selection using a frequentist and Bayesian approach to find the best descriptor of a filament's fragmentation. The code is open-source and can be downloaded here.

@@ -31,14 +31,14 @@ ks_stat, p_ks = FragMent.KS_test(nn_seps, "NNS", boundary, nruns, sep_limit)
 ad_stat, crit_vals, p_ad = FragMent.AD_test(nn_seps, "NNS", boundary, nruns, sep_limit)
 
 ### Report results
-print " "
-print " "
-print "######## Nearest neighbour results ########"
-print "The median and interquartile range of the distribution are: ", numpy.median(nn_seps), iqr(nn_seps)
-print "The p-value using the median-interquartile range NHT is   : ", p_median
-print "The mean and standard deviation of the distribution are   : ", numpy.mean(nn_seps), numpy.std(nn_seps)
-print "The p-value using the mean-standard deviation NHT is      : ", p_mean
-print "The p-values from the K-S and A-D test are                : ", p_ks, p_ad
+print(" ")
+print(" ")
+print("######## Nearest neighbour results ########")
+print("The median and interquartile range of the distribution are: ", numpy.median(nn_seps), iqr(nn_seps))
+print("The p-value using the median-interquartile range NHT is   : ", p_median)
+print("The mean and standard deviation of the distribution are   : ", numpy.mean(nn_seps), numpy.std(nn_seps))
+print("The p-value using the mean-standard deviation NHT is      : ", p_mean)
+print("The p-values from the K-S and A-D test are                : ", p_ks, p_ad)
 
 
 
@@ -53,14 +53,14 @@ ks_stat, p_ks = FragMent.KS_test(mst_seps, "MST", boundary, nruns, sep_limit)
 ad_stat, crit_vals, p_ad = FragMent.AD_test(mst_seps, "MST", boundary, nruns, sep_limit)
 
 ### Report results
-print " "
-print " "
-print "######## Minimum spanning tree results ########"
-print "The median and interquartile range of the distribution are: ", numpy.median(mst_seps), iqr(mst_seps)
-print "The p-value using the median-interquartile range NHT is   : ", p_median
-print "The mean and standard deviation of the distribution are   : ", numpy.mean(mst_seps), numpy.std(mst_seps)
-print "The p-value using the mean-standard deviation NHT are     : ", p_mean
-print "The p-values from the K-S and A-D test are                : ", p_ks, p_ad
+print(" ")
+print(" ")
+print("######## Minimum spanning tree results ########")
+print("The median and interquartile range of the distribution are: ", numpy.median(mst_seps), iqr(mst_seps))
+print("The p-value using the median-interquartile range NHT is   : ", p_median)
+print("The mean and standard deviation of the distribution are   : ", numpy.mean(mst_seps), numpy.std(mst_seps))
+print("The p-value using the mean-standard deviation NHT are     : ", p_mean)
+print("The p-values from the K-S and A-D test are                : ", p_ks, p_ad)
 
 
 
@@ -89,10 +89,10 @@ plt.xlabel("Average separation")
 plt.ylabel("Average width")
 plt.savefig("NNN_results.png")
 
-print " "
-print " "
-print "######## Nth nearest neighbour test ########"
-print "The results are plotted in the file NNN_results.png"
+print(" ")
+print(" ")
+print("######## Nth nearest neighbour test ########")
+print("The results are plotted in the file NNN_results.png")
 
 
 
@@ -119,10 +119,10 @@ plt.ylabel("Two point correlation function")
 plt.legend(loc="best")
 plt.savefig("Two_point_results.png")
 
-print " "
-print " "
-print "######## Two point correlation function test ########"
-print "The results are plotted in the file Two_point_results.png"
+print(" ")
+print(" ")
+print("######## Two point correlation function test ########")
+print("The results are plotted in the file Two_point_results.png")
 
 
 ### Determine the power spectrum of the spine data
@@ -139,10 +139,10 @@ plt.xlabel("Wavenumber")
 plt.ylabel("Normalised power spectrum")
 plt.savefig("FT_results.png")
 
-print " "
-print " "
-print "######## Power spectrum test ########"
-print "The results are plotted in the file FT_results.png"
+print(" ")
+print(" ")
+print("######## Power spectrum test ########")
+print("The results are plotted in the file FT_results.png")
 
 
 
@@ -185,21 +185,21 @@ aic_two = model_two[0]
 weight_two = model_two[1]
 
 ### Report results
-print " "
-print " "
-print "######## Frequentist model selection results ########"
+print(" ")
+print(" ")
+print("######## Frequentist model selection results ########")
 
 if(aic_one < aic_two):
-	print "Single-tier fragmentation is preferred"
-	print "The Akaike weight for the model is: ", weight_one
-	print "This gives an evidence ratio of   : ", weight_one/weight_two
-	print "The fit parameters are            : ", theta_one
+	print("Single-tier fragmentation is preferred")
+	print("The Akaike weight for the model is: ", weight_one)
+	print("This gives an evidence ratio of   : ", weight_one/weight_two)
+	print("The fit parameters are            : ", theta_one)
 
 if(aic_two< aic_one):
-	print "Two-tier fragmentation is preferred"
-	print "The Akaike weight for the model is: ", weight_two
-	print "This gives an evidence ratio of   : ", weight_two/weight_one
-	print "The fit parameters are            : ", theta_two
+	print("Two-tier fragmentation is preferred")
+	print("The Akaike weight for the model is: ", weight_two)
+	print("This gives an evidence ratio of   : ", weight_two/weight_one)
+	print("The fit parameters are            : ", theta_two)
 
 
 
@@ -240,19 +240,19 @@ n=15
 evi_one, evi_two = FragMent.Evidence_explicit(mst_seps,bound,prior_one, prior_two,n)
 
 ### Report results
-print " "
-print " "
-print "######## Bayesian model selection results ########"
+print(" ")
+print(" ")
+print("######## Bayesian model selection results ########")
 
 if(evi_one > evi_two):
-	print "Single-tier fragmentation is preferred"
-	print "The Bayes factor for in favour of model one is   : ", evi_one/evi_two
-	print "The most likely parameters from the posterior are: ", walkers_one[numpy.argmax(post_one)]
+	print("Single-tier fragmentation is preferred")
+	print("The Bayes factor for in favour of model one is   : ", evi_one/evi_two)
+	print("The most likely parameters from the posterior are: ", walkers_one[numpy.argmax(post_one)])
 
 if(evi_two > evi_one):
-	print "Two-tier fragmentation is preferred"
-	print "The Bayes factor for in favour of model two is   : ", evi_two/evi_one
-	print "The most likely parameters from the posterior are: ", walkers_two[numpy.argmax(post_two)]
+	print("Two-tier fragmentation is preferred")
+	print("The Bayes factor for in favour of model two is   : ", evi_two/evi_one)
+	print("The most likely parameters from the posterior are: ", walkers_two[numpy.argmax(post_two)])
 
 
 
