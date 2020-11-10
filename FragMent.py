@@ -1114,7 +1114,7 @@ def Straighten_filament_interp(spine, Map, n_pix, max_dist, order):
 
 	### Look to see if we should prune the spine just in case
 	spine = Prune_spine(spine)
-
+	
 	### Unpack the spine array and determine the number of spine points
 	x = spine[:,0]
 	y = spine[:,1]
@@ -1228,11 +1228,22 @@ def Map_cores(spine, pos, order):
 	### Extract spine positions and fit with a polynomial
 	xs = spine[:,0]
 	ys = spine[:,1]
+	n_spine = len(xs)
 	p = numpy.polyfit(xs,ys,order)
 	f = numpy.poly1d(p)
 	p2 = p[:-1]
 	q = numpy.arange(1,order+1,1)
 	grad = numpy.poly1d(p2*q[::-1])
+
+	### Create empty length array
+	length = numpy.zeros(n_spine)
+
+	### Loop over the spine points
+	for ii in range(0,n_spine):
+
+		### If the spine point is not the first then we construct the length along the filament
+		if(ii>0):
+			length[ii] = length[ii-1] + numpy.sqrt( (xs[ii]-xs[ii-1])**2 + (ys[ii]-ys[ii-1])**2 )
 
 	### Loop over each core and map
 	for ii in range(0,n_cores):
@@ -1275,7 +1286,7 @@ def Map_cores(spine, pos, order):
 
 		### Once we go over all spine points we know the r-l co-ordinates of the core
 		core_pos[ii,0]=direction * min_dist
-		core_pos[ii,1]=min_dist_index
+		core_pos[ii,1]=length[min_dist_index]
 		
 	return core_pos
 
